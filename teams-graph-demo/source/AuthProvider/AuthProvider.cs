@@ -11,9 +11,13 @@ using System.Configuration;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using System.Web;
+using Microsoft.Ajax.Utilities;
 using Microsoft.Graph.Auth;
 using Resources;
 using Microsoft_Teams_Graph_RESTAPIs_Connect.ImportantFiles;
+using Microsoft_Teams_Graph_RESTAPIs_Connect.Models;
+using Microsoft_Teams_Graph_RESTAPIs_Connect.Utils;
+using Newtonsoft.Json;
 
 namespace Microsoft_Teams_Graph_RESTAPIs_Connect.Auth
 {
@@ -83,6 +87,36 @@ namespace Microsoft_Teams_Graph_RESTAPIs_Connect.Auth
             }
         }
 
+
+
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        public async Task<string> GetAPIAccessTokenAsync()
+        {
+            var httpHelpers = new HttpHelpers();
+
+            try
+            {
+                var response = await httpHelpers.AcquireAuthToken(ConfigurationManager.AppSettings["ida:TenantId"],
+                    ConfigurationManager.AppSettings["ida:AppId"],
+                    ConfigurationManager.AppSettings["ida:AppSecret"]);
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    var oAuthModel = JsonConvert.DeserializeObject<OAuth2Response>(content);
+                    return oAuthModel.AccessToken;
+                }
+            }
+            catch (Exception e)
+            {
+                throw new Exception(Resource.Error_AuthChallengeNeeded);
+            }
+
+            return null;
+        }
        
     }
 }

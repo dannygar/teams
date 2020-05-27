@@ -18,6 +18,9 @@ namespace Microsoft_Teams_Graph_RESTAPIs_Connect
         public const string BasicSignInScopes = "openid profile email offline_access user.readbasic.all";
         public const string NameClaimType = "name";
         public const string IncomingWebhookUrl = "https://outlook.office.com/webhook/{0}@{1}/IncomingWebhook/{2}";
+
+        public const string LogicAppUrl =
+            "https://prod-63.eastus.logic.azure.com:443/workflows/{0}/triggers/manual/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig={1}";
         public const string PublicKey = "democode"; // must be 8 characters length!
         public const string PrivateKey = "fZsWm0Zf"; // must be 8 characters length!
         public const int ENC_LENGTH = 4; // the number of characters in JWT token to encrypt

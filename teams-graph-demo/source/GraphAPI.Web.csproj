@@ -275,7 +275,9 @@
     </Compile>
     <Compile Include="ImportantFiles\GraphService.cs" />
     <Compile Include="ImportantFiles\ServiceHelper.cs" />
-    <Compile Include="Models\HtmlHelpers.cs" />
+    <Compile Include="Models\OAuth2Response.cs" />
+    <Compile Include="Utils\HtmlHelpers.cs" />
+    <Compile Include="Models\LOBData.cs" />
     <Compile Include="Models\MessageCard.cs" />
     <Compile Include="Models\TeamsApp.cs" />
     <Compile Include="Models\Clone.cs" />

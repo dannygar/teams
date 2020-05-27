@@ -41,6 +41,10 @@ namespace GraphAPI.Web.Controllers
             );
         private static string _callbackUrl = ConfigurationManager.AppSettings["ida:CallbackUrl"];
 
+        private static string _logicAppUrl = string.Format(Globals.LogicAppUrl,
+            ConfigurationManager.AppSettings["ida:LogicAppWorkflowId"],
+            ConfigurationManager.AppSettings["ida:LogicAppSig"]);
+
         readonly GraphService graphService ;
 
         public HomeController()
@@ -287,6 +291,20 @@ namespace GraphAPI.Web.Controllers
         }
 
 
+
+        [Authorize]
+        public async Task<ActionResult> StartLOBFlowForm()
+        {
+            return await WithExceptionHandling(
+                token => new FormOutput()
+                {
+                    ShowTeamDropdown = true,
+                    ShowChannelDropdown = true,
+                    ShowMessageBodyInput = false,
+                    ButtonLabel = "Start LOB Flow",
+                });
+        }
+
         [Authorize]
         public async Task<ActionResult> PostMessageAction(FormOutput data)
         {
@@ -377,150 +395,8 @@ namespace GraphAPI.Web.Controllers
         [Authorize]
         public async Task<ActionResult> StartFlowAction(FormOutput data)
         {
-            // Create a Post Card
-            var message = string.IsNullOrEmpty(data.MessageBodyInput)
-                ? "Larry Bryant created a new task"
-                : data.MessageBodyInput;
-            
-            // Obtain and then encrypt the JWT access token
-            var accessToken = await AuthProvider.Instance.GetUserAccessTokenAsync();
-            //var encAccessToken = HttpUtility.UrlEncode(Encryption.Encrypt(accessToken, Globals.PublicKey, Globals.PrivateKey));
-            // Encrypt only the first 4 characters
-            var encPart = HttpUtility.UrlEncode(Encryption.Encrypt(accessToken.Substring(0, Globals.ENC_LENGTH), Globals.PublicKey, Globals.PrivateKey));
-            // Mix the encrypted portion with the rest of the token
-            accessToken = accessToken.Substring(Globals.ENC_LENGTH);
-
-            var messageCard = new MessageCard
-            {
-                Type = "MessageCard",
-                Context = new Uri("http://schema.org/extensions"),
-                ThemeColor = "0076D7",
-                Summary = message,
-                Sections = new List<Section>
-                {
-                    new Section
-                    {
-                        ActivityTitle =
-                            $"![TestImage](https://47a92947.ngrok.io/Content/Images/default.png){message}",
-                        ActivitySubtitle = "On Project Tango",
-                        ActivityImage = new Uri("https://teamsnodesample.azurewebsites.net/static/img/image5.png"),
-                        Facts = new List<Fact>
-                        {
-                            new Fact {Name = "Assigned to", Value = "Unassigned"},
-                            new Fact
-                            {
-                                Name = "Due date", Value = "Tue May 26 2020 17:07:18 GMT-0700 (Pacific Daylight Time)"
-                            },
-                            new Fact {Name = "Status", Value = "Not started"},
-                        },
-                        Markdown = true
-                    }
-                },
-                PotentialAction = new List<PotentialAction>
-                {
-                    new PotentialAction
-                    {
-                        Type = "ActionCard",
-                        Name = "Approve",
-                        Inputs = new List<Input>
-                        {
-                            new Input
-                            {
-                                Type = "TextInput",
-                                Id = "comment",
-                                IsMultiline = false,
-                                Title = "Add a comment here for this task"
-                            }
-                        },
-                        Actions = new List<CardAction>
-                        {
-                            new CardAction
-                            {
-                                Type = "HttpPOST",
-                                Name = "Submit",
-                                Target = new Uri($"{_callbackUrl}?id={(int) ActionCodes.Approved}&enc={encPart}&token={accessToken}")
-                            }
-                        }
-                    },
-                    new PotentialAction
-                    {
-                        Type = "ActionCard",
-                        Name = "Cancel",
-                        Inputs = new List<Input>
-                        {
-                            new Input
-                            {
-                                Type = "TextInput",
-                                Id = "comment",
-                                IsMultiline = false,
-                                Title = "Add a comment here for this task"
-                            }
-                        },
-                        Actions = new List<CardAction>
-                        {
-                            new CardAction
-                            {
-                                Type = "HttpPOST",
-                                Name = "Cancel",
-                                Target = new Uri($"{_callbackUrl}?id={(int) ActionCodes.Cancel}&enc={encPart}&token={accessToken}")
-                            }
-                        }
-                    },
-                    new PotentialAction
-                    {
-                        Type = "ActionCard",
-                        Name = "Set due date",
-                        Inputs = new List<Input>
-                        {
-                            new Input
-                            {
-                                Type = "DateInput",
-                                Id = "dueDate",
-                                Title = "Enter a due date for this task"
-                            }
-                        },
-                        Actions = new List<CardAction>
-                        {
-                            new CardAction
-                            {
-                                Type = "HttpPOST",
-                                Name = "Save",
-                                Target = new Uri($"{_callbackUrl}?id={(int) ActionCodes.ChangeDate}&enc={encPart}&token={accessToken}")
-                            }
-                        }
-                    },
-                    new PotentialAction
-                    {
-                        Type = "ActionCard",
-                        Name = "Change status",
-                        Inputs = new List<Input>
-                        {
-                            new Input
-                            {
-                                Type = "MultichoiceInput",
-                                Id = "list",
-                                IsMultiline = false,
-                                Title = "Select a status",
-                                Choices = new List<Choice>
-                                {
-                                    new Choice {Display = "In Progress", Value = 1},
-                                    new Choice {Display = "Active", Value = 2},
-                                    new Choice {Display = "Closed", Value = 3},
-                                }
-                            }
-                        },
-                        Actions = new List<CardAction>
-                        {
-                            new CardAction
-                            {
-                                Type = "HttpPOST",
-                                Name = "Save",
-                                Target = new Uri($"{_callbackUrl}?id={(int) ActionCodes.ChangeStatus}&enc={encPart}&token={accessToken}")
-                            }
-                        }
-                    },
-                }
-            };
+            // Create a Message Card
+            var messageCard = await CreateMessageCard(data);
 
             return await WithExceptionHandlingAsync(
                 async token =>
@@ -535,21 +411,53 @@ namespace GraphAPI.Web.Controllers
         }
 
 
+
+
+        [Authorize]
+        public async Task<ActionResult> StartLOBFlowAction(FormOutput data)
+        {
+            // Obtain and then encrypt the JWT access token
+            var accessToken = await AuthProvider.Instance.GetUserAccessTokenAsync();
+
+            // Create a Message Card
+            var messageCard = await CreateMessageCard(data);
+
+            // Create a LOB message
+            var lobData = new LOBData
+            {
+                Id = Guid.NewGuid().ToString(),
+                Status = "New",
+                DueDate = DateTime.UtcNow.AddDays(7),
+                AssignedTo = "Unassigned",
+                Task = messageCard,
+                Token = accessToken
+            };
+
+
+            return await WithExceptionHandlingAsync(
+                async token =>
+                {
+                    await graphService.PostMessage(_logicAppUrl, messageCard, token);
+                    return new FormOutput()
+                    {
+                        SuccessMessage = "Sent",
+                    };
+                }
+            );
+        }
+
+
         [Authorize]
         public async Task<ActionResult> PostGroupForm()
         {
             return await WithExceptionHandling(
-                token =>
+                token => new FormOutput()
                 {
-                    return new FormOutput()
-                    {
-                        ShowDescriptionInput = true,
-                        ShowDisplayNameInput = true,
-                        ShowMailNicknameInput = true,
-                        ButtonLabel = "Create team",
-                    };
-                }
-                );
+                    ShowDescriptionInput = true,
+                    ShowDisplayNameInput = true,
+                    ShowMailNicknameInput = true,
+                    ButtonLabel = "Create team",
+                });
         }
 
         [Authorize]
@@ -728,6 +636,159 @@ namespace GraphAPI.Web.Controllers
         public ActionResult About()
         {
             return View();
+        }
+
+
+
+        private async Task<MessageCard> CreateMessageCard(FormOutput data)
+        {
+            // Create a Post Card
+            var message = string.IsNullOrEmpty(data.MessageBodyInput)
+                ? "Larry Bryant created a new task"
+                : data.MessageBodyInput;
+
+            // Obtain and then encrypt the JWT access token
+            var accessToken = await AuthProvider.Instance.GetUserAccessTokenAsync();
+            //var encAccessToken = HttpUtility.UrlEncode(Encryption.Encrypt(accessToken, Globals.PublicKey, Globals.PrivateKey));
+            // Encrypt only the first 4 characters
+            var encPart = HttpUtility.UrlEncode(Encryption.Encrypt(accessToken.Substring(0, Globals.ENC_LENGTH), Globals.PublicKey, Globals.PrivateKey));
+            // Mix the encrypted portion with the rest of the token
+            accessToken = HttpUtility.UrlEncode(accessToken.Substring(Globals.ENC_LENGTH));
+
+
+            var messageCard = new MessageCard
+            {
+                Type = "MessageCard",
+                Context = new Uri("http://schema.org/extensions"),
+                ThemeColor = "0076D7",
+                Summary = message,
+                Sections = new List<Section>
+                {
+                    new Section
+                    {
+                        ActivityTitle =
+                            $"![TestImage](https://47a92947.ngrok.io/Content/Images/default.png){message}",
+                        ActivitySubtitle = "On Project Tango",
+                        ActivityImage = new Uri("https://teamsnodesample.azurewebsites.net/static/img/image5.png"),
+                        Facts = new List<Fact>
+                        {
+                            new Fact {Name = "Assigned to", Value = "Unassigned"},
+                            new Fact
+                            {
+                                Name = "Due date", Value = "Tue May 26 2020 17:07:18 GMT-0700 (Pacific Daylight Time)"
+                            },
+                            new Fact {Name = "Status", Value = "Not started"},
+                        },
+                        Markdown = true
+                    }
+                },
+                PotentialAction = new List<PotentialAction>
+                {
+                    new PotentialAction
+                    {
+                        Type = "ActionCard",
+                        Name = "Approve",
+                        Inputs = new List<Input>
+                        {
+                            new Input
+                            {
+                                Type = "TextInput",
+                                Id = "comment",
+                                IsMultiline = false,
+                                Title = "Add a comment here for this task"
+                            }
+                        },
+                        Actions = new List<CardAction>
+                        {
+                            new CardAction
+                            {
+                                Type = "HttpPOST",
+                                Name = "Submit",
+                                Target = new Uri($"{_callbackUrl}?id={(int) ActionCodes.Approved}&enc={encPart}&token={accessToken}")
+                            }
+                        }
+                    },
+                    new PotentialAction
+                    {
+                        Type = "ActionCard",
+                        Name = "Cancel",
+                        Inputs = new List<Input>
+                        {
+                            new Input
+                            {
+                                Type = "TextInput",
+                                Id = "comment",
+                                IsMultiline = false,
+                                Title = "Add a comment here for this task"
+                            }
+                        },
+                        Actions = new List<CardAction>
+                        {
+                            new CardAction
+                            {
+                                Type = "HttpPOST",
+                                Name = "Cancel",
+                                Target = new Uri($"{_callbackUrl}?id={(int) ActionCodes.Cancel}&enc={encPart}&token={accessToken}")
+                            }
+                        }
+                    },
+                    new PotentialAction
+                    {
+                        Type = "ActionCard",
+                        Name = "Set due date",
+                        Inputs = new List<Input>
+                        {
+                            new Input
+                            {
+                                Type = "DateInput",
+                                Id = "dueDate",
+                                Title = "Enter a due date for this task"
+                            }
+                        },
+                        Actions = new List<CardAction>
+                        {
+                            new CardAction
+                            {
+                                Type = "HttpPOST",
+                                Name = "Save",
+                                Target = new Uri($"{_callbackUrl}?id={(int) ActionCodes.ChangeDate}&enc={encPart}&token={accessToken}")
+                            }
+                        }
+                    },
+                    new PotentialAction
+                    {
+                        Type = "ActionCard",
+                        Name = "Change status",
+                        Inputs = new List<Input>
+                        {
+                            new Input
+                            {
+                                Type = "MultichoiceInput",
+                                Id = "list",
+                                IsMultiline = false,
+                                Title = "Select a status",
+                                Choices = new List<Choice>
+                                {
+                                    new Choice {Display = "In Progress", Value = 1},
+                                    new Choice {Display = "Active", Value = 2},
+                                    new Choice {Display = "Closed", Value = 3},
+                                }
+                            }
+                        },
+                        Actions = new List<CardAction>
+                        {
+                            new CardAction
+                            {
+                                Type = "HttpPOST",
+                                Name = "Save",
+                                Target = new Uri($"{_callbackUrl}?id={(int) ActionCodes.ChangeStatus}&enc={encPart}&token={accessToken}")
+                            }
+                        }
+                    },
+                }
+            };
+
+            return messageCard;
         }
     }
 }

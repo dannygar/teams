@@ -27,6 +27,37 @@ namespace Microsoft_Teams_Graph_RESTAPIs_Connect.Controllers
             _channelId = ConfigurationManager.AppSettings["ida:ChannelId"];
         }
 
+
+        // POST api/<controller>?id=<id>&st=<secure token>
+        [System.Web.Http.HttpPost]
+        public async Task<HttpResponseMessage> ApprovalResponse(int id)
+        {
+            string status = String.Empty;
+            var newUrl = this.Url.Link("Default", new { Controller = "Home", Action = "Index" });
+
+            var accessToken = await AuthProvider.Instance.GetAPIAccessTokenAsync();
+
+            switch (id)
+            {
+                case 1:
+                    status = "Approved";
+                    break;
+                case 2:
+                    status = "change due date";
+                    break;
+                case 3:
+                    status = "change status";
+                    break;
+                default:
+                    status = "cancelled";
+                    break;
+            }
+
+            await PostMessageAction(status, accessToken);
+            return Request.CreateResponse(HttpStatusCode.OK, new { Success = true, Status = status, RedirectUrl = newUrl });
+        }
+
+
         // POST api/<controller>?id=<id>&st=<secure token>
         [System.Web.Http.HttpPost]
         public async Task<HttpResponseMessage> ApprovalResponse(int id, string enc, string token)
@@ -36,7 +67,7 @@ namespace Microsoft_Teams_Graph_RESTAPIs_Connect.Controllers
 
             //var accessToken = Encryption.Decrypt(HttpUtility.UrlDecode(st), Globals.PublicKey, Globals.PrivateKey);
             var decrPart = Encryption.Decrypt(HttpUtility.UrlDecode(enc), Globals.PublicKey, Globals.PrivateKey);
-            var accessToken = $"{decrPart}{token}";
+            var accessToken = $"{decrPart}{HttpUtility.UrlDecode(token)}";
 
 
             switch (id)

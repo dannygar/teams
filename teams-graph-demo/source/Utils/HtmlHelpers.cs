@@ -1,17 +1,16 @@
-﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Web;
+using Microsoft_Teams_Graph_RESTAPIs_Connect.Models;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 
-namespace Microsoft_Teams_Graph_RESTAPIs_Connect.Models
+namespace Microsoft_Teams_Graph_RESTAPIs_Connect.Utils
 {
     public static class Statics
     {
@@ -30,8 +29,11 @@ namespace Microsoft_Teams_Graph_RESTAPIs_Connect.Models
     {
         public HttpClient httpClient = new HttpClient();
         public string accessToken;
-        public string graphV1Endpoint = "https://graph.microsoft.com/v1.0";
-        public string graphBetaEndpoint = "https://graph.microsoft.com/beta";
+        public const string graphV1Endpoint = "https://graph.microsoft.com/v1.0";
+        public const string graphBetaEndpoint = "https://graph.microsoft.com/beta";
+        public const string msalOauth2EndpointTemplate = "https://login.microsoftonline.com/{0}/oauth2/token";
+        public const string msalResourceEndpoint = "https://management.core.windows.net/";
+
         public static readonly JsonSerializerSettings jsonSettings =
             new JsonSerializerSettings { ContractResolver = new CamelCasePropertyNamesContractResolver() };
 
@@ -211,6 +213,31 @@ namespace Microsoft_Teams_Graph_RESTAPIs_Connect.Models
 
             if (!response.IsSuccessStatusCode)
                 throw new Exception(responseBody);
+            return response;
+        }
+
+
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="tenantId"></param>
+        /// <param name="clientId"></param>
+        /// <param name="clientSecret"></param>
+        /// <returns></returns>
+        public async Task<HttpResponseMessage> AcquireAuthToken(string tenantId, string clientId, string clientSecret)
+        {
+            var msalOauthEndpoint = string.Format(msalOauth2EndpointTemplate, tenantId);
+
+            var bodyParams = new FormUrlEncodedContent(new[]
+            {
+                new KeyValuePair<string, string>("grant_type", "client_credentials"),
+                new KeyValuePair<string, string>("resource", msalResourceEndpoint),
+                new KeyValuePair<string, string>("client_id", clientId),
+                new KeyValuePair<string, string>("client_secret", clientSecret),
+            });
+
+            HttpResponseMessage response = await httpClient.PostAsync(msalOauthEndpoint, bodyParams);
             return response;
         }
     }

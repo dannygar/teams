@@ -16,8 +16,8 @@ netsh http delete urlacl url=https://+:9441/
 REM --- Add new URL ACLs and certificate bindings ---
 netsh http add urlacl url=https://+:8445/ sddl=D:(A;;GX;;;S-1-1-0)
 netsh http add urlacl url=https://+:9441/ sddl=D:(A;;GX;;;S-1-1-0)
-netsh http add sslcert ipport=0.0.0.0:9441 certhash=f301c896f6c2fd344ea7cdff88c86b593ef21dc2 appid={0d735ff4-9660-43e9-ae56-c1c05eda00b2}
-netsh http add sslcert ipport=0.0.0.0:8445 certhash=f301c896f6c2fd344ea7cdff88c86b593ef21dc2 appid={0d735ff4-9660-43e9-ae56-c1c05eda00b2}
+netsh http add sslcert ipport=0.0.0.0:9441 certhash=<insert wildcard certificate thumbprint> appid={0d735ff4-9660-43e9-ae56-c1c05eda00b2}
+netsh http add sslcert ipport=0.0.0.0:8445 certhash=<insert wildcard certificate thumbprint> appid={0d735ff4-9660-43e9-ae56-c1c05eda00b2}
 
 popd
 exit /b 0

@@ -303,7 +303,10 @@ namespace Sample.AudioVideoPlaybackBot.WorkerRole
             if (RoleEnvironment.IsEmulated)
             {
                 // Create structured config objects for service.
+                // this.CallControlBaseUrl = new Uri($"https://{this.ServiceCname}/{HttpRouteConstants.CallSignalingRoutePrefix}");
+                // this.CallControlBaseUrl = new Uri($"https://{this.ServiceDnsName}");
                 this.CallControlBaseUrl = new Uri($"https://{this.ServiceCname}/{HttpRouteConstants.CallSignalingRoutePrefix}");
+
                 controlListenUris.Add("https://+:" + this.SignalingPort + "/");
                 controlListenUris.Add("http://+:" + (this.SignalingPort + 1) + "/");
             }
@@ -328,22 +331,28 @@ namespace Sample.AudioVideoPlaybackBot.WorkerRole
                 this.TraceConfigValue("Call control listening Uri", uri);
             }
 
+            // IPAddress publicInstanceIpAddress = RoleEnvironment.IsEmulated
+            //    ? IPAddress.Any
+            //    : this.GetInstancePublicIpAddress(this.ServiceDnsName);
+
+            // var publicMediaUrl = new Uri($"net.tcp://{this.ServiceCname}:{this.TcpForwardingPort}");
+            var publicMediaUrl = new Uri($"net.tcp://1.tcp.ngrok.io:{this.TcpForwardingPort}");
             IPAddress publicInstanceIpAddress = RoleEnvironment.IsEmulated
-                ? IPAddress.Any
+                ? Dns.GetHostEntry(publicMediaUrl.Host).AddressList[0]
                 : this.GetInstancePublicIpAddress(this.ServiceDnsName);
 
-            // string serviceFqdn = RoleEnvironment.IsEmulated ? "0.ngrok.skype-graph-test.net" : this.ServiceCname;
-            var serviceFqdn = this.ServiceCname;
+            // var serviceFqdn = this.ServiceCname.Replace("tcp.ngrok.io", $"{this.ServiceDnsName}");
+            string serviceFqdn = RoleEnvironment.IsEmulated ? this.ServiceDnsName : this.ServiceCname;
 
             this.MediaPlatformSettings = new MediaPlatformSettings()
             {
                 MediaPlatformInstanceSettings = new MediaPlatformInstanceSettings()
                 {
-                    CertificateThumbprint = defaultCertificate.Thumbprint,
-                    InstanceInternalPort = mediaInstanceInternalPort,
-                    InstancePublicIPAddress = publicInstanceIpAddress,
-                    InstancePublicPort = mediaInstancePublicPort,
-                    ServiceFqdn = serviceFqdn,
+                    CertificateThumbprint = defaultCertificate.Thumbprint, // <Your SSL Cert thumbprint>
+                    InstanceInternalPort = mediaInstanceInternalPort, // <Localhost media port>
+                    InstancePublicPort = mediaInstancePublicPort, // <Ngrok exposed remote media port>
+                    InstancePublicIPAddress = publicInstanceIpAddress, // new IPAddress(0x0)
+                    ServiceFqdn = serviceFqdn, // <Media url for bot (eg: 1.bot.contoso.com)>
                 },
 
                 ApplicationId = this.AadAppId,

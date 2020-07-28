@@ -280,7 +280,6 @@ namespace Sample.AudioVideoPlaybackBot.FrontEnd.Bot
             try
             {
                 await Task.WhenAll(this.audioSendStatusActive.Task, this.videoSendStatusActive.Task).ConfigureAwait(false);
-
                 this.logger.Info("Send status active for audio and video Creating the audio video player");
                 this.audioVideoFramePlayerSettings =
                     new AudioVideoFramePlayerSettings(new AudioSettings(20), new VideoSettings(), 1000);

@@ -335,13 +335,12 @@ namespace Sample.AudioVideoPlaybackBot.WorkerRole
             //    ? IPAddress.Any
             //    : this.GetInstancePublicIpAddress(this.ServiceDnsName);
 
-            // var publicMediaUrl = new Uri($"net.tcp://{this.ServiceCname}:{this.TcpForwardingPort}");
-            var publicMediaUrl = new Uri($"net.tcp://1.tcp.ngrok.io:{this.TcpForwardingPort}");
+            var tcpAddress = $"{this.ServiceDnsName.Substring(0, this.ServiceDnsName.IndexOf("."))}.tcp.ngrok.io:{this.TcpForwardingPort}";
+            var publicMediaUrl = new Uri(tcpAddress);
             IPAddress publicInstanceIpAddress = RoleEnvironment.IsEmulated
                 ? Dns.GetHostEntry(publicMediaUrl.Host).AddressList[0]
                 : this.GetInstancePublicIpAddress(this.ServiceDnsName);
 
-            // var serviceFqdn = this.ServiceCname.Replace("tcp.ngrok.io", $"{this.ServiceDnsName}");
             string serviceFqdn = RoleEnvironment.IsEmulated ? this.ServiceDnsName : this.ServiceCname;
 
             this.MediaPlatformSettings = new MediaPlatformSettings()

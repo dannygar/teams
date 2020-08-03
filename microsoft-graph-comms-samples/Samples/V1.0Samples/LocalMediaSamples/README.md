@@ -40,35 +40,3 @@ If you choose to go down this route, please take a look at the deployment steps 
 ## Run your bot locally
 
 To run your bot locally you will need to configure a local proxy.  [ngrok](https://ngrok.com/) is a great service that allows local proxy of both http (signalling) and tcp (media) traffic.  For more information please reference our [Local Testing Guide](https://microsoftgraph.github.io/microsoft-graph-comms-samples/docs/articles/Testing.html)
-Then, run the following script replacing the <values> with the corresponding values obtained from your certificate:
-
-```bash
-REM --- Move to this scripts location ---
-pushd "%~dp0"
-
-REM --- Print out environment variables for debugging ---
-set
-
-REM --- Ensure the VC_redist is installed for the Microsoft.Skype.Bots.Media Library ---
-.\VC_redist.x64.exe /quiet /norestart
-
-REM --- Delete existing certificate bindings and URL ACL registrations ---
-netsh http delete sslcert ipport=0.0.0.0:9441
-netsh http delete sslcert ipport=0.0.0.0:8445
-netsh http delete urlacl url=https://+:8445/
-netsh http delete urlacl url=https://+:9441/
-
-REM --- Add new URL ACLs and certificate bindings ---
-netsh http add urlacl url=https://+:8445/ sddl=D:(A;;GX;;;S-1-1-0)
-netsh http add urlacl url=https://+:9441/ sddl=D:(A;;GX;;;S-1-1-0)
-netsh http add sslcert ipport=0.0.0.0:9441 certhash=<your certificate's thumbprint> appid={<your project's Id from WorkerRole's AssemblyInfo.cs>}
-netsh http add sslcert ipport=0.0.0.0:8445 certhash=<your certificate's thumbprint> appid={<your project's Id from WorkerRole's AssemblyInfo.cs>}
-
-popd
-exit /b 0
-```
-
-Next, in PowerShell administrative console, run the `configure_cloud.ps1` script, providing your parameters.
-Example:
-`.\configure_cloud.ps1 -p .\V1.0Samples\LocalMediaSamples\AudioVideoPlaybackBot\ -dns dannyg.ngrok.io -cn dannyg.ngrok.io -thumb ABC0000000000000000000000000000000000CBA -bid CallingBot1 -aid <app id> -as <secret> -sp 9441 -mp 8445 -tcp 22803`
-

@@ -4,15 +4,15 @@
     <Instances count="2" />
     <ConfigurationSettings>
       <Setting name="Microsoft.WindowsAzure.Plugins.Diagnostics.ConnectionString" value="DefaultEndpointsProtocol=https;AccountName=$storage$;AccountKey=$storageKey$" />
-      <Setting name="ServiceDnsName" value="<insert ngrok subdomain url>" />
+      <Setting name="ServiceDnsName" value="%ServiceDns%" />
       <!-- xyz.cloudapp.net-->
-      <Setting name="ServiceCNAME" value="<insert ngrok subdomain url>" />
+      <Setting name="ServiceCNAME" value="%CName%" />
       <!-- CNAME pointing to the .cloudapp.net if available.-->
-      <Setting name="DefaultCertificate" value="<insert wildcard certificate thumbprint>" />
+      <Setting name="DefaultCertificate" value="ABC0000000000000000000000000000000000CBA" />
       <Setting name="APPINSIGHTS_INSTRUMENTATIONKEY" value="" />
     </ConfigurationSettings>
     <Certificates>
-      <Certificate name="Default" thumbprint="<insert wildcard certificate thumbprint>" thumbprintAlgorithm="sha1" />
+      <Certificate name="Default" thumbprint="ABC0000000000000000000000000000000000CBA" thumbprintAlgorithm="sha1" />
     </Certificates>
   </Role>
   <NetworkConfiguration>

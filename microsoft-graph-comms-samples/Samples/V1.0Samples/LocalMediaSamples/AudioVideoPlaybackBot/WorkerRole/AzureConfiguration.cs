@@ -303,8 +303,6 @@ namespace Sample.AudioVideoPlaybackBot.WorkerRole
             if (RoleEnvironment.IsEmulated)
             {
                 // Create structured config objects for service.
-                // this.CallControlBaseUrl = new Uri($"https://{this.ServiceCname}/{HttpRouteConstants.CallSignalingRoutePrefix}");
-                // this.CallControlBaseUrl = new Uri($"https://{this.ServiceDnsName}");
                 this.CallControlBaseUrl = new Uri($"https://{this.ServiceCname}/{HttpRouteConstants.CallSignalingRoutePrefix}");
 
                 controlListenUris.Add("https://+:" + this.SignalingPort + "/");
@@ -330,10 +328,6 @@ namespace Sample.AudioVideoPlaybackBot.WorkerRole
             {
                 this.TraceConfigValue("Call control listening Uri", uri);
             }
-
-            // IPAddress publicInstanceIpAddress = RoleEnvironment.IsEmulated
-            //    ? IPAddress.Any
-            //    : this.GetInstancePublicIpAddress(this.ServiceDnsName);
 
             var tcpAddress = $"{this.ServiceDnsName.Substring(0, this.ServiceDnsName.IndexOf("."))}.tcp.ngrok.io:{this.TcpForwardingPort}";
             var publicMediaUrl = new Uri(tcpAddress);

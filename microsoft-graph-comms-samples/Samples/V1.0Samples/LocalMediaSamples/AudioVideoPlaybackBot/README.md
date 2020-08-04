@@ -75,6 +75,18 @@ authtoken: <Your-AuthToken>
 
 4.As with the bot's messaging API, in order for the Real-time Media Platform to talk to your bot, your bot must be reachable over the internet. Ngrok makes this simple — add the following lines to your ngrok.yml:
 
+Ngrok Free Version:
+
+```json
+tunnels:
+  signaling:
+    addr: "https://localhost:9441"
+    proto: http
+    host-header: localhost
+```
+
+Ngrok Pro Version:
+
 ```json
 tunnels:
   signaling:
@@ -86,6 +98,16 @@ tunnels:
 
 5.Now, setup a TCP tunnel to forward the traffic to localhost. Write the following lines into your ngrok.yml:
 
+Ngrok Free Account
+
+```json
+  media:
+    addr: 8445
+    proto: tcp
+```
+
+Ngrok Pro Account
+
 ```json
   media:
     addr: 8445
@@ -94,6 +116,22 @@ tunnels:
 ```
 
 6.Your ngrok.yml now should look something like this:
+
+Ngrok Free Version
+
+```json
+authtoken: 43ksdfjlsielsdf_siwoeirwXXXX
+tunnels:
+  signaling:
+    addr: "https://localhost:9441"
+    proto: http
+    host-header: localhost
+  media:
+    addr: 8445
+    proto: tcp
+```
+
+Ngrok Pro Version
 
 ```json
 authtoken: 43ksdfjlsielsdf_siwoeirwXXXX
@@ -115,6 +153,18 @@ tunnels:
 
 This starts ngrok and defines the public URLs which provide the tunnels to your localhost. The output looks like the following:
 
+Ngrok Free Account
+
+```cmd
+Forwarding  tcp://0.tcp.ngrok.io:15448 -> localhost:8445
+Forwarding  http://32f6055e17b3.ngrok.io -> https://localhost:9441
+Forwarding  https://32f6055e17b3.ngrok.io -> https://localhost:9441
+```
+
+Here, 9441 is the signaling port, 8445 is the application-hosted port, 32f6055e17b3 is a randomly generated ngrok domain name (note that it will change every time you restart ngrok), 0.tcp.ngrok.io:15448 is a randomly generated remote TCP address (note that it will change every time you restart ngrok).
+
+Ngrok Pro Account
+
 ```cmd
 Forwarding  tcp://1.tcp.ngrok.io:12332 -> localhost:8445
 Forwarding  http://contoso.ngrok.io -> localhost:9441
@@ -131,11 +181,22 @@ Application-hosted media uses certificates and TCP tunnels. The following steps 
 
 1. Create and register a domain name with one of the popular domain registrars. For our example here, we'll refer to it as: `contoso.com`
 
-2. A SSL certificate is required for your domain's based URLs. To make it easy, use a SSL certificate issued to a wildcard domain. In this case, it would be `*.contoso.com`. This SSL certificate is validated by the media SDK, so it should match your bot's public URL. Note the thumbprint and install it in your local machine certificates store.
+2. A SSL certificate is required for your domain's based URLs. To make it easy, use a SSL certificate issued to a wildcard domain. In this case, it would be `*.contoso.com`. This SSL certificate is validated by the media SDK, so it should match your bot's public URL.
 
-#### Creating and Configuring DNS Zone
+3. After installing the SSL certificate in your PC's local machine certificates store, open the certificate's details and take a note of the thumbprint as you will use it later.
+![Thumbprint](Images/Thumbprint.png)
 
-Ngrok's public TCP endpoints have fixed URLs. They are 0.tcp.ngrok.io, 1.tcp.ngrok.io, and so on. You should have a DNS CNAME entry for your service that points to these URLs. In this example, let's say 0.contoso.com refers to 0.tcp.ngrok.io, 1.contoso.com refers to 1.tcp.ngrok.io, and so on. To achieve that, follow these steps:
+>Note: Thumbprint is a property that is  attached to the certificate object by CryptoAPI subsystem and this value is always hashed with SHA1 (160 bit) algorithm. Its value is typically rendered as a hexadecimal number, 40 digits long and should never include any whitespaces, colons or uppercases letters.
+
+#### Configuring DNS Zone
+
+Ngrok's public TCP endpoints have fixed URLs. They are 0.tcp.ngrok.io, 1.tcp.ngrok.io, and so on. You should have a DNS CNAME entry for your service that points to these URLs. In this example, let's say 0.contoso.com refers to 0.tcp.ngrok.io, 1.contoso.com refers to 1.tcp.ngrok.io, and so on.
+You have two options to add CNAME records to your domain:
+
+1. Go to your domain registrar website and follow their instructions to create and add CNAME records in the DNS for your domain.
+2. Create and configure DNS Zone in Azure.
+
+Here, we will show how to achieve the latter, following these steps:
 
 1. Go to and log into your Azure subscription account at portal.azure.com
 
@@ -196,6 +257,8 @@ Once ngrok is up and running, start your solution from Visual Studio, which load
 
 ### Test
 
+>Note: The Teams meeting should be scheduled in the same Teams tenant as the one was used to grant the AVPlaybackBot bot access permissions.
+
 1. Schedule a Teams meeting with another person.
 
     ![Test Meeting1](Images/TestMeeting1.png)
@@ -253,7 +316,7 @@ Once ngrok is up and running, start your solution from Visual Studio, which load
     4. Terminating the call through `DELETE`. Replace the call id 491f0500-401f-4f11-8af4-2eff4c0a0643 below with your call id from the first response.
 
         ##### Request
-        
+
         ```http
         DELETE https://bot.contoso.com/calls/491f0500-401f-4f11-8af4-2eff4c0a0643
         ```

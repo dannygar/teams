@@ -303,7 +303,7 @@ namespace Sample.AudioVideoPlaybackBot.WorkerRole
             if (RoleEnvironment.IsEmulated)
             {
                 // Create structured config objects for service.
-                this.CallControlBaseUrl = new Uri($"https://{this.ServiceCname}/{HttpRouteConstants.CallSignalingRoutePrefix}");
+                this.CallControlBaseUrl = new Uri($"https://{this.ServiceDnsName}/{HttpRouteConstants.CallSignalingRoutePrefix}");
 
                 controlListenUris.Add("https://+:" + this.SignalingPort + "/");
                 controlListenUris.Add("http://+:" + (this.SignalingPort + 1) + "/");
@@ -313,7 +313,7 @@ namespace Sample.AudioVideoPlaybackBot.WorkerRole
                 // Create structured config objects for service.
                 this.CallControlBaseUrl = new Uri(string.Format(
                     "https://{0}:{1}/{2}",
-                    this.ServiceCname,
+                    this.ServiceDnsName,
                     instanceCallControlPublicPort,
                     HttpRouteConstants.CallSignalingRoutePrefix));
 
@@ -329,13 +329,15 @@ namespace Sample.AudioVideoPlaybackBot.WorkerRole
                 this.TraceConfigValue("Call control listening Uri", uri);
             }
 
-            var tcpAddress = $"{this.ServiceDnsName.Substring(0, this.ServiceDnsName.IndexOf("."))}.tcp.ngrok.io:{this.TcpForwardingPort}";
+            // IPAddress publicInstanceIpAddress = RoleEnvironment.IsEmulated
+            //    ? IPAddress.Any
+            //    : this.GetInstancePublicIpAddress(this.ServiceDnsName);
+
+            var tcpAddress = $"tcp://{this.ServiceCname.Substring(0, this.ServiceCname.IndexOf("."))}.tcp.ngrok.io:{this.TcpForwardingPort}";
             var publicMediaUrl = new Uri(tcpAddress);
             IPAddress publicInstanceIpAddress = RoleEnvironment.IsEmulated
                 ? Dns.GetHostEntry(publicMediaUrl.Host).AddressList[0]
-                : this.GetInstancePublicIpAddress(this.ServiceDnsName);
-
-            string serviceFqdn = RoleEnvironment.IsEmulated ? this.ServiceDnsName : this.ServiceCname;
+                : this.GetInstancePublicIpAddress(this.ServiceCname);
 
             this.MediaPlatformSettings = new MediaPlatformSettings()
             {
@@ -345,7 +347,7 @@ namespace Sample.AudioVideoPlaybackBot.WorkerRole
                     InstanceInternalPort = mediaInstanceInternalPort, // <Localhost media port>
                     InstancePublicPort = mediaInstancePublicPort, // <Ngrok exposed remote media port>
                     InstancePublicIPAddress = publicInstanceIpAddress, // new IPAddress(0x0)
-                    ServiceFqdn = serviceFqdn, // <Media url for bot (eg: 1.bot.contoso.com)>
+                    ServiceFqdn = this.ServiceCname, // <Media url for bot (eg: 1.bot.contoso.com)>
                 },
 
                 ApplicationId = this.AadAppId,
